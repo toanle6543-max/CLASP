@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>C.L.A.S.P — Classical Lamination Analytical Solver Program</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg:#0F1720; --panel:#16212C; --panel2:#1C2934; --grid:#1E2E3A; --border:#26394A;
+    --text:#E7EDF2; --text2:#8CA0B3; --cyan:#5EC8D8; --amber:#E8A33D; --green:#4CAF7D; --red:#E8604C;
+  }
+  *{ box-sizing:border-box; }
+  svg{ display:block; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; }
+  #app{ width:100%; min-height:100vh; padding:20px; }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  .display{ font-family:'Space Grotesk',sans-serif; }
+
+  .header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:10px; }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-icon{ width:32px; height:32px; border-radius:6px; background:var(--panel2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
+  .brand-title{ font-size:18px; font-weight:700; letter-spacing:-0.3px; }
+  .brand-sub{ font-size:12px; color:var(--text2); margin-top:-2px; }
+  .units{ font-size:12px; color:var(--text2); }
+
+  .grid-top{ display:grid; grid-template-columns:1fr; gap:16px; }
+  @media(min-width:1100px){ .grid-top{ grid-template-columns:repeat(12,1fr); } }
+  .col-4{ grid-column:span 12; } @media(min-width:1100px){ .col-4{ grid-column:span 4; } }
+
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; }
+  .panel2{ background:var(--panel2); border:1px solid var(--border); border-radius:8px; }
+
+  .section-head{ display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .section-title{ font-size:13px; font-weight:600; letter-spacing:0.3px; }
+  .section-sub{ font-size:11px; color:var(--text2); }
+  .panel-head-row{ display:flex; align-items:center; justify-content:space-between; }
+
+  .icon-btn{ background:transparent; border:1px solid var(--border); color:var(--text2); border-radius:6px; padding:6px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+  .icon-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .icon-btn.danger:hover{ border-color:var(--red); color:var(--red); }
+
+  label.field{ display:flex; flex-direction:column; gap:4px; }
+  label.field span{ font-size:11px; color:var(--text2); }
+  input[type=number], input[type=text], select{
+    background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:5px; padding:6px 8px; font-size:13px; outline:none; font-family:'JetBrains Mono',monospace; width:100%;
+  }
+  select{ font-family:'Inter',sans-serif; color-scheme:dark; }
+  input:focus, select:focus{ border-color:var(--cyan); }
+
+  .mat-list, .ply-list{ display:flex; flex-direction:column; gap:8px; max-height:560px; overflow-y:auto; padding-right:4px; }
+  .mat-card-head{ display:flex; align-items:center; gap:8px; padding:8px; }
+  .swatch{ width:12px; height:12px; border-radius:2px; flex-shrink:0; }
+  .mat-name-input{ flex:1; background:transparent; border:none; font-size:14px; font-weight:500; color:var(--text); font-family:'Inter',sans-serif; padding:2px 0; }
+  .mat-fields{ padding:0 8px 8px 8px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .mat-fields .full{ grid-column:1/-1; }
+  .strength-label{ font-size:11px; color:var(--text2); padding-top:4px; }
+
+  .ply-row{ display:flex; align-items:center; gap:6px; padding:6px; }
+  .ply-row-critical{ border:1.5px solid var(--amber) !important; box-shadow: inset 0 0 0 1px rgba(232,163,61,0.25); }
+  .crit-badge{ display:flex; align-items:center; flex-shrink:0; }
+  .ply-idx{ width:20px; text-align:center; font-size:11px; color:var(--text2); flex-shrink:0; }
+  .ply-angle{ width:56px; padding:5px 6px; font-size:12px; }
+  .deg{ font-size:11px; color:var(--text2); }
+  .ply-mat-select{ flex:1; padding:5px 6px; font-size:12px; }
+
+  .layup-body{ display:flex; gap:12px; align-items:flex-start; }
+  .stack-col{ flex-shrink:0; width:150px; display:flex; flex-direction:column; align-items:center; }
+  .stack-label{ font-size:11px; color:var(--text2); margin-bottom:4px; }
+  .mirror-row{ display:flex; gap:6px; margin-bottom:8px; }
+  .mirror-btn{ flex:1; display:flex; align-items:center; justify-content:center; gap:4px; font-size:10.5px; font-weight:600; padding:5px 6px; border-radius:5px; background:transparent; border:1px solid var(--border); color:var(--text2); cursor:pointer; }
+  .mirror-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .mirror-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .mirror-btn:disabled:hover{ border-color:var(--border); color:var(--text2); }
+  .stack-endlabel{ font-size:9px; color:var(--text2); text-transform:uppercase; letter-spacing:0.3px; }
+
+  .mode-toggle{ display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .mode-btn{ flex:1; padding:8px; font-size:12px; font-weight:600; border:none; cursor:pointer; background:transparent; color:var(--text2); }
+  .mode-btn.active-direct{ background:var(--cyan); color:var(--bg); }
+  .mode-btn.active-iter{ background:var(--amber); color:var(--bg); }
+  .mode-note{ font-size:11px; color:var(--text2); margin-top:6px; }
+
+  .run-btn{ margin-top:16px; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:var(--cyan); color:var(--bg); border:none; border-radius:6px; padding:10px; font-size:14px; font-weight:600; cursor:pointer; }
+  .run-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .run-btn:active{ transform:scale(0.98); }
+  .stale-note{ font-size:11px; color:var(--amber); text-align:center; margin-top:8px; }
+
+  .results{ margin-top:20px; display:flex; flex-direction:column; gap:16px; }
+  .cards3{ display:grid; grid-template-columns:1fr; gap:16px; }
+  @media(min-width:900px){ .cards3{ grid-template-columns:repeat(3,1fr); } }
+  .card-label{ font-size:11px; color:var(--text2); margin-bottom:8px; }
+  .status-row{ display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .status-text{ font-size:13px; font-weight:600; }
+  .sub-text{ font-size:11px; color:var(--text2); }
+  .badge{ padding:1px 6px; border-radius:4px; font-size:11px; }
+  .badge-fail{ background:rgba(232,96,76,0.15); color:var(--red); }
+  .badge-ok{ background:rgba(76,175,125,0.15); color:var(--green); }
+
+  .grid2{ display:grid; grid-template-columns:1fr; gap:16px; }
+  @media(min-width:1000px){ .grid2{ grid-template-columns:1fr 1fr; } }
+
+  table{ width:100%; border-collapse:collapse; font-size:12px; }
+  th{ text-align:left; color:var(--text2); font-weight:500; padding-bottom:4px; }
+  th.right, td.right{ text-align:right; }
+  th.center, td.center{ text-align:center; }
+  td{ padding:4px 6px 4px 0; border-top:1px solid var(--grid); }
+  tr.critical-row td{ background:rgba(232,163,61,0.08); }
+  tr.critical-row td:first-child{ border-left:2px solid var(--amber); }
+
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+
+  .comp-toggle{ font-size:11px; padding:2px 8px; border-radius:5px; font-weight:600; cursor:pointer; background:transparent; }
+  .empty-note{ font-size:12px; color:var(--text2); text-align:center; padding:12px; }
+
+  .abd-wrap{ display:grid; grid-template-columns:1fr; gap:18px; }
+  @media(min-width:800px){ .abd-wrap{ grid-template-columns:repeat(3,1fr); } }
+  .abd-block-label{ font-size:12px; font-weight:600; color:var(--text); margin-bottom:6px; }
+  .abd-block-unit{ font-size:11px; color:var(--text2); font-weight:400; }
+  .abd-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .abd-cell{ background:var(--panel2); padding:7px 8px; font-size:11.5px; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  /* Tooltips */
+  .tip{ position:relative; cursor:help; border-bottom:1px dotted var(--text2); display:inline-block; }
+  .tip::after{
+    content: attr(data-tooltip);
+    position:absolute; left:0; bottom:calc(100% + 6px); z-index:50;
+    width:max-content; max-width:220px; padding:6px 8px; border-radius:6px;
+    background:#0A1219; color:var(--text); font-family:'Inter',sans-serif; font-weight:400;
+    font-size:11px; line-height:1.4; border:1px solid var(--border);
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    opacity:0; pointer-events:none; transform:translateY(3px); transition:opacity .12s ease, transform .12s ease;
+  }
+  .tip:hover::after{ opacity:1; transform:translateY(0); }
+  .mat-section-label{ font-size:11px; color:var(--text2); padding-top:6px; text-transform:uppercase; letter-spacing:0.4px; }
+  .mat-section-label:first-child{ padding-top:0; }
+
+  /* Ply material select truncation */
+  .ply-mat-select{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .header-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .unit-toggle{ display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .unit-btn{ padding:6px 10px; font-size:11px; font-weight:600; border:none; cursor:pointer; background:transparent; color:var(--text2); }
+  .unit-btn.active{ background:var(--cyan); color:var(--bg); }
+  .reset-btn{ display:flex; align-items:center; gap:6px; background:transparent; border:1px solid var(--red); color:var(--red); border-radius:6px; padding:6px 10px; font-size:12px; font-weight:600; cursor:pointer; }
+  .reset-btn:hover{ background:rgba(232,96,76,0.12); }
+  .export-btn{ display:flex; align-items:center; gap:6px; background:transparent; border:1px solid var(--green); color:var(--green); border-radius:6px; padding:6px 10px; font-size:12px; font-weight:600; cursor:pointer; }
+  .export-btn:hover{ background:rgba(76,175,125,0.12); }
+  .export-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .export-btn:disabled:hover{ background:transparent; }
+  .about-btn{ display:flex; align-items:center; justify-content:center; background:transparent; border:1px solid var(--border); color:var(--text2); border-radius:6px; width:30px; height:30px; cursor:pointer; }
+  .about-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(6,10,14,0.72); display:flex; align-items:center; justify-content:center; z-index:100; padding:20px; }
+  .modal-card{ position:relative; max-width:480px; width:100%; max-height:80vh; overflow-y:auto; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+  .modal-close{ position:absolute; top:14px; right:14px; background:transparent; border:none; color:var(--text2); cursor:pointer; padding:4px; border-radius:5px; display:flex; }
+  .modal-close:hover{ color:var(--text); background:var(--panel2); }
+  .modal-title{ font-size:17px; font-weight:700; margin-bottom:14px; padding-right:24px; }
+  .modal-body p{ font-size:13px; line-height:1.55; color:var(--text2); margin:0 0 12px 0; }
+  .modal-body p:last-child{ margin-bottom:0; }
+  .modal-body a{ color:var(--cyan); text-decoration:none; }
+  .modal-body a:hover{ text-decoration:underline; }
+
+  .scale-config{ margin-top:12px; display:flex; flex-direction:column; gap:2px; padding:10px; background:var(--panel2); border:1px solid var(--border); border-radius:6px; }
+  .scale-row{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; padding:5px 0; border-bottom:1px solid var(--border); }
+  .scale-row:last-child{ border-bottom:none; }
+  .scale-label{ width:38px; font-size:12px; color:var(--text2); flex-shrink:0; }
+  .scale-factor{ width:64px; padding:4px 6px; font-size:12px; flex-shrink:0; }
+  .scale-const{ display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text2); cursor:pointer; user-select:none; flex-shrink:0; margin-left:auto; white-space:nowrap; }
+  .scale-const input{ width:auto; accent-color:var(--cyan); cursor:pointer; flex-shrink:0; }
+  .print-header{ display:none; }
+
+  @media print {
+    :root{
+      --bg:#ffffff; --panel:#ffffff; --panel2:#f4f6f8; --grid:#dde3e8; --border:#c7cfd6;
+      --text:#111820; --text2:#4a5866; --cyan:#0e7490; --amber:#b45309; --green:#15803d; --red:#b91c1c;
+    }
+    html,body{ background:#fff; }
+    #app{ padding:0; }
+    .header-actions, .icon-btn, .run-btn, .mode-toggle, .comp-toggle, .stale-note,
+    .mat-card-head .icon-btn, .ply-row .icon-btn, .modal-backdrop { display:none !important; }
+    .mode-note{ display:none; }
+    .print-header{ display:block; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #111820; }
+    .print-header .pt-title{ font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700; }
+    .print-header .pt-sub{ font-size:11px; color:#4a5866; margin-top:2px; }
+    .header{ border-bottom:none; margin-bottom:6px; padding-bottom:0; }
+    .brand-icon{ display:none; }
+    .grid-top{ display:block; }
+    .grid-top > .panel{ margin-bottom:14px; page-break-inside:avoid; break-inside:avoid; }
+    .layup-body{ flex-direction:column; }
+    .stack-col{ width:100%; align-items:flex-start; margin-top:10px; }
+    .mat-list, .ply-list{ max-height:none; overflow:visible; }
+    .cards3{ display:block; }
+    .cards3 > .panel{ margin-bottom:12px; page-break-inside:avoid; break-inside:avoid; }
+    .grid2{ display:block; }
+    .grid2 > .panel{ margin-bottom:12px; page-break-inside:avoid; break-inside:avoid; }
+    .abd-wrap{ display:block; }
+    .abd-wrap > div{ margin-bottom:10px; }
+    .results > .panel, .results > .panel2{ page-break-inside:avoid; break-inside:avoid; margin-bottom:12px; }
+    input, select{ border:none !important; background:transparent !important; color:#111820 !important; padding:2px 0 !important; }
+    select{ appearance:none; -webkit-appearance:none; }
+    .mat-name-input{ font-weight:600; }
+    .swatch{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .badge-fail, .badge-ok{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    table{ page-break-inside:auto; }
+    tr{ page-break-inside:avoid; break-inside:avoid; }
+    .tip::after{ display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="print-header">
+  <div class="pt-title">C.L.A.S.P &mdash; Classical Lamination Analytical Solver Program</div>
+  <div class="pt-sub" id="printTimestamp">Report generated</div>
+</div>
+<div id="app"></div>
+
+<script>
+(function(){
+"use strict";
+
+// ============================================================================
+// DESIGN TOKENS
+// ============================================================================
+var COLORS = {
+  bg:"#0F1720", panel:"#16212C", panel2:"#1C2934", grid:"#1E2E3A", border:"#26394A",
+  text:"#E7EDF2", text2:"#8CA0B3", cyan:"#5EC8D8", amber:"#E8A33D", green:"#4CAF7D", red:"#E8604C"
+};
+var MAT_PALETTE = ["#5EC8D8","#E8A33D","#8B7FD4","#4CAF7D","#D97757","#6FA8DC","#C77DBB"];
+
+// Unit systems: labels shown to the user, and conversion factors (imperial <-> metric)
+var UNIT_LABELS = {
+  imperial: { stress:"psi", length:"in", force:"lbf", forceLen:"lbf/in", temp:"\u00b0F", cte:"1/\u00b0F", flexural:"lbf\u00b7in" },
+  metric:   { stress:"MPa", length:"mm", force:"N",   forceLen:"N/mm",   temp:"\u00b0C", cte:"1/\u00b0C", flexural:"N\u00b7mm" }
+};
+// Multiply an imperial value by these to get the metric equivalent
+var PSI_TO_MPA = 0.00689475729, IN_TO_MM = 25.4, LBF_TO_N = 4.4482216153;
+var ABD_FACTORS = { A: LBF_TO_N/IN_TO_MM, B: LBF_TO_N, D: LBF_TO_N*IN_TO_MM };
+function toDisplayABD(value, mat){ return state.units==="metric" ? value*ABD_FACTORS[mat] : value; }
+var MAT_TO_METRIC = { E1:PSI_TO_MPA, E2:PSI_TO_MPA, G12:PSI_TO_MPA, v12:1, a1:1.8, a2:1.8, t:IN_TO_MM,
+  Xt:PSI_TO_MPA, Xc:PSI_TO_MPA, Yt:PSI_TO_MPA, Yc:PSI_TO_MPA, S:PSI_TO_MPA };
+var LOAD_TO_METRIC = { Nx:LBF_TO_N/IN_TO_MM, Ny:LBF_TO_N/IN_TO_MM, Nxy:LBF_TO_N/IN_TO_MM,
+  Mx:LBF_TO_N, My:LBF_TO_N, Mxy:LBF_TO_N, dT:5/9 };
+
+function currentUnits(){ return UNIT_LABELS[state.units]; }
+function matFactor(field){ return MAT_TO_METRIC[field] || 1; }
+function loadFactor(field){ return LOAD_TO_METRIC[field] || 1; }
+// canonical storage is always Imperial; these convert canonical <-> currently displayed units
+function toDisplayMat(value, field){ return state.units==="metric" ? value*matFactor(field) : value; }
+function toCanonicalMat(value, field){ return state.units==="metric" ? value/matFactor(field) : value; }
+function toDisplayLoad(value, field){ return state.units==="metric" ? value*loadFactor(field) : value; }
+function toCanonicalLoad(value, field){ return state.units==="metric" ? value/loadFactor(field) : value; }
+function toDisplayStress(value){ return state.units==="metric" ? value*PSI_TO_MPA : value; }
+function toDisplayCurvature(value){ return state.units==="metric" ? value/IN_TO_MM : value; }
+function fmtNum(v){
+  if(!isFinite(v)) return String(v);
+  if(v===0) return "0";
+  var a = Math.abs(v);
+  if(a >= 1e-4 && a < 1e7) {
+    var s = parseFloat(v.toPrecision(6)).toString();
+    return s;
+  }
+  return v.toExponential(4);
+}
+
+// Symbol and hover-tooltip definition for every material property field (unit resolved live)
+function getFieldDefs(){
+  var u = currentUnits();
+  return {
+    E1:  { label:"E1",  unit:u.stress, tip:"Longitudinal Modulus \u2014 stiffness of the ply along the fiber direction" },
+    E2:  { label:"E2",  unit:u.stress, tip:"Transverse Modulus \u2014 stiffness of the ply perpendicular to the fiber direction" },
+    G12: { label:"G12", unit:u.stress, tip:"In-Plane Shear Modulus \u2014 resistance to shear deformation in the 1-2 ply plane" },
+    v12: { label:"v12", unit:"",       tip:"Major Poisson's Ratio \u2014 transverse strain induced per unit axial strain, loading along direction 1" },
+    a1:  { label:"\u03b11", unit:u.cte, tip:"Longitudinal CTE \u2014 coefficient of thermal expansion along the fiber direction" },
+    a2:  { label:"\u03b12", unit:u.cte, tip:"Transverse CTE \u2014 coefficient of thermal expansion perpendicular to the fiber direction" },
+    t:   { label:"t",   unit:u.length, tip:"Ply Thickness \u2014 cured thickness of a single ply of this material" },
+    Xt:  { label:"Xt",  unit:u.stress, tip:"Ultimate Tensile Strength, Longitudinal \u2014 fiber-direction tensile failure stress" },
+    Xc:  { label:"Xc",  unit:u.stress, tip:"Ultimate Compressive Strength, Longitudinal \u2014 fiber-direction compressive failure stress" },
+    Yt:  { label:"Yt",  unit:u.stress, tip:"Ultimate Tensile Strength, Transverse \u2014 matrix-direction tensile failure stress" },
+    Yc:  { label:"Yc",  unit:u.stress, tip:"Ultimate Compressive Strength, Transverse \u2014 matrix-direction compressive failure stress" },
+    S:   { label:"S",   unit:u.stress, tip:"In-Plane Shear Strength \u2014 ultimate shear stress capacity in the 1-2 ply plane" }
+  };
+}
+
+// ============================================================================
+// ICONS (minimal feather-style inline SVGs)
+// ============================================================================
+function icon(name, size, color){
+  size = size || 14; color = color || "currentColor";
+  var paths = {
+    plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+    trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+    play: '<polygon points="5 3 19 12 5 21 5 3"/>',
+    chevronDown: '<polyline points="6 9 12 15 18 9"/>',
+    chevronUp: '<polyline points="18 15 12 9 6 15"/>',
+    arrowUp: '<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>',
+    arrowDown: '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',
+    alertTriangle: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+    checkCircle: '<circle cx="12" cy="12" r="10"/><polyline points="16 9 10.5 15 8 12.5"/>',
+    layers: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+    gauge: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="12" x2="16" y2="9"/><line x1="8" y1="7" x2="8" y2="7"/>',
+    flask: '<path d="M9 2h6"/><path d="M10 2v6.2a2 2 0 0 1-.4 1.2L4.7 17a2 2 0 0 0 1.6 3.2h11.4a2 2 0 0 0 1.6-3.2l-4.9-7.6a2 2 0 0 1-.4-1.2V2"/><line x1="7.5" y1="14.5" x2="16.5" y2="14.5"/>',
+    stack: '<rect x="3" y="4" width="18" height="4.2" rx="1"/><rect x="3" y="9.9" width="18" height="4.2" rx="1"/><rect x="3" y="15.8" width="18" height="4.2" rx="1"/>',
+    star: '<polygon points="12 2 15.09 8.63 22 9.24 17 14.14 18.18 21 12 17.77 5.82 21 7 14.14 2 9.24 8.91 8.63 12 2"/>',
+    mirror: '<line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2,2"/><path d="M6 8l-3 4 3 4"/><path d="M18 8l3 4-3 4"/>',
+    info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+    close: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    reset: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'
+  };
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(paths[name]||'')+'</svg>';
+}
+
+// ============================================================================
+// LINEAR ALGEBRA HELPERS
+// ============================================================================
+function mat3Inv(S){
+  var a=S[0][0],b=S[0][1],c=S[0][2],d=S[1][0],e=S[1][1],f=S[1][2],g=S[2][0],h=S[2][1],i=S[2][2];
+  var A=e*i-f*h, B_=-(d*i-f*g), C=d*h-e*g;
+  var D=-(b*i-c*h), E=a*i-c*g, F=-(a*h-b*g);
+  var G=b*f-c*e, H=-(a*f-c*d), I=a*e-b*d;
+  var det=a*A+b*B_+c*C;
+  var cof=[[A,B_,C],[D,E,F],[G,H,I]];
+  var inv=[[0,0,0],[0,0,0],[0,0,0]];
+  for(var r=0;r<3;r++) for(var c2=0;c2<3;c2++) inv[r][c2]=cof[c2][r]/det;
+  return inv;
+}
+function matMul(A,B){
+  var n=A.length,m=B[0].length,k=B.length;
+  var C=[]; for(var i=0;i<n;i++){ C.push(new Array(m).fill(0)); }
+  for(i=0;i<n;i++) for(var j=0;j<m;j++){ var s=0; for(var p=0;p<k;p++) s+=A[i][p]*B[p][j]; C[i][j]=s; }
+  return C;
+}
+function transpose(A){
+  var n=A.length,m=A[0].length;
+  var T=[]; for(var i=0;i<m;i++) T.push(new Array(n).fill(0));
+  for(i=0;i<n;i++) for(var j=0;j<m;j++) T[j][i]=A[i][j];
+  return T;
+}
+function zeros(n,m){ var Z=[]; for(var i=0;i<n;i++) Z.push(new Array(m).fill(0)); return Z; }
+function addInPlace(A,B){ for(var i=0;i<A.length;i++) for(var j=0;j<A[0].length;j++) A[i][j]+=B[i][j]; return A; }
+function scaleMat(A,s){ return A.map(function(r){ return r.map(function(x){ return x*s; }); }); }
+function solveLinear(Ain,bin){
+  var n=Ain.length;
+  var A=Ain.map(function(r){ return r.slice(); });
+  var b=bin.slice();
+  for(var col=0; col<n; col++){
+    var piv=col;
+    for(var r=col+1;r<n;r++) if(Math.abs(A[r][col])>Math.abs(A[piv][col])) piv=r;
+    var tmpA=A[col]; A[col]=A[piv]; A[piv]=tmpA;
+    var tmpB=b[col]; b[col]=b[piv]; b[piv]=tmpB;
+    var pv=A[col][col];
+    if(Math.abs(pv)<1e-30) return null;
+    for(var c=col;c<n;c++) A[col][c]/=pv;
+    b[col]/=pv;
+    for(r=0;r<n;r++){
+      if(r===col) continue;
+      var factor=A[r][col];
+      for(c=col;c<n;c++) A[r][c]-=factor*A[col][c];
+      b[r]-=factor*b[col];
+    }
+  }
+  return b;
+}
+function buildQ(mat){
+  var E1=mat.E1,E2=mat.E2,G12=mat.G12,v12=mat.v12;
+  var v21=(E2*v12)/E1;
+  var S=[[1/E1,-v21/E2,0],[-v12/E1,1/E2,0],[0,0,1/G12]];
+  return mat3Inv(S);
+}
+function transformsFor(thetaDeg){
+  var rad=(thetaDeg*Math.PI)/180, c=Math.cos(rad), s=Math.sin(rad);
+  var TStress=[[c*c,s*s,2*s*c],[s*s,c*c,-2*s*c],[-s*c,s*c,c*c-s*s]];
+  var TStrain=[[c*c,s*s,s*c],[s*s,c*c,-s*c],[-2*s*c,2*s*c,c*c-s*s]];
+  return { TStress:TStress, TStrain:TStrain };
+}
+function QGlobalFor(mat,thetaDeg){
+  var Q=buildQ(mat);
+  var t=transformsFor(thetaDeg);
+  return matMul(matMul(transpose(t.TStrain),Q),t.TStrain);
+}
+function alphaGlobalFor(mat,thetaDeg){
+  var rad=(thetaDeg*Math.PI)/180, c=Math.cos(rad), s=Math.sin(rad);
+  var a1=mat.a1, a2=mat.a2;
+  return [a1*c*c+a2*s*s, a1*s*s+a2*c*c, 2*(a1-a2)*c*s];
+}
+
+// ============================================================================
+// CLT CORE SOLVER
+// ============================================================================
+function computeKLevels(plies, materials){
+  var matById = {}; materials.forEach(function(m){ matById[m.id]=m; });
+  var H = plies.reduce(function(sum,p){ return sum + matById[p.materialId].t; }, 0);
+  var z=-H/2, k=[z];
+  plies.forEach(function(p){ z += matById[p.materialId].t; k.push(z); });
+  return k;
+}
+
+function solveLaminate(materials, plies, loads){
+  var matById = {}; materials.forEach(function(m){ matById[m.id]=m; });
+  var n = plies.length;
+  if(n===0) return null;
+  var kLevel = computeKLevels(plies, materials);
+  var dT=loads.dT, Nx=loads.Nx, Ny=loads.Ny, Nxy=loads.Nxy, Mx=loads.Mx, My=loads.My, Mxy=loads.Mxy;
+  var N=[Nx,Ny,Nxy], M=[Mx,My,Mxy];
+
+  var A=zeros(3,3), B=zeros(3,3), D=zeros(3,3);
+  var NT=[0,0,0], MT=[0,0,0];
+  var plyQG=[];
+  for(var i=0;i<n;i++){
+    var mat=matById[plies[i].materialId];
+    var theta=plies[i].angle;
+    var Qg=QGlobalFor(mat,theta);
+    var alpha=alphaGlobalFor(mat,theta);
+    plyQG.push(Qg);
+    var z0=kLevel[i], z1=kLevel[i+1];
+    addInPlace(A, scaleMat(Qg, z1-z0));
+    addInPlace(B, scaleMat(Qg, 0.5*(z1*z1-z0*z0)));
+    addInPlace(D, scaleMat(Qg, (1/3)*(Math.pow(z1,3)-Math.pow(z0,3))));
+    var qa = matMul(Qg,[[alpha[0]],[alpha[1]],[alpha[2]]]);
+    var NTply = qa.map(function(r){ return r[0]*dT*(z1-z0); });
+    var MTply = qa.map(function(r){ return r[0]*0.5*dT*(z1*z1-z0*z0); });
+    NT = NT.map(function(v,idx){ return v+NTply[idx]; });
+    MT = MT.map(function(v,idx){ return v+MTply[idx]; });
+  }
+
+  var NTot = N.map(function(v,idx){ return v+NT[idx]; });
+  var MTot = M.map(function(v,idx){ return v+MT[idx]; });
+
+  var ABD = zeros(6,6);
+  for(i=0;i<3;i++) for(var j=0;j<3;j++){
+    ABD[i][j]=A[i][j]; ABD[i][j+3]=B[i][j]; ABD[i+3][j]=B[i][j]; ABD[i+3][j+3]=D[i][j];
+  }
+  var rhs = NTot.concat(MTot);
+  var strCurv = solveLinear(ABD, rhs);
+  if(!strCurv) return { singular:true };
+  var midStrain = strCurv.slice(0,3);
+  var curvature = strCurv.slice(3,6);
+
+  var plyResults = plies.map(function(p,idx){
+    var mat = matById[p.materialId];
+    var Qg = plyQG[idx];
+    var alpha = alphaGlobalFor(mat, p.angle);
+    var t = transformsFor(p.angle);
+    var z0=kLevel[idx], z1=kLevel[idx+1];
+
+    function stateAtZ(z){
+      var globalStrain = midStrain.map(function(e,k2){ return e+z*curvature[k2]; });
+      var thermalAdj = globalStrain.map(function(e,k2){ return e-alpha[k2]*dT; });
+      var globalStress = matMul(Qg, thermalAdj.map(function(v){ return [v]; })).map(function(r){ return r[0]; });
+      var localStress = matMul(t.TStress, globalStress.map(function(v){ return [v]; })).map(function(r){ return r[0]; });
+      var localStrain = matMul(t.TStrain, globalStrain.map(function(v){ return [v]; })).map(function(r){ return r[0]; });
+      return { globalStress:globalStress, localStress:localStress, localStrain:localStrain };
+    }
+    var bottom = stateAtZ(z0);
+    var top = stateAtZ(z1);
+
+    function ratios(local, mat){
+      var s1=local[0], s2=local[1], s12=local[2];
+      var r1 = s1>=0 ? s1/mat.Xt : s1/mat.Xc;
+      var r2 = s2>=0 ? s2/mat.Yt : s2/mat.Yc;
+      var r12 = Math.abs(s12/mat.S);
+      return { r1:r1, r2:r2, r12:r12, max:Math.max(r1,r2,r12) };
+    }
+    function strainRatios(local, mat){
+      var e1=local[0], e2=local[1], e12=local[2];
+      var etuL=mat.Xt/mat.E1, ecuL=mat.Xc/mat.E1;
+      var etuT=mat.Yt/mat.E2, ecuT=mat.Yc/mat.E2;
+      var ysuLT=mat.S/mat.G12;
+      var r1 = e1>=0 ? e1/etuL : e1/ecuL;
+      var r2 = e2>=0 ? e2/etuT : e2/ecuT;
+      var r12 = Math.abs(e12/ysuLT);
+      return { r1:r1, r2:r2, r12:r12, max:Math.max(r1,r2,r12) };
+    }
+    var stressRatioBottom = ratios(bottom.localStress, mat);
+    var stressRatioTop = ratios(top.localStress, mat);
+    var strainRatioBottom = strainRatios(bottom.localStrain, mat);
+    var strainRatioTop = strainRatios(top.localStrain, mat);
+
+    function hashinRotem(local, mat){
+      var s1=local[0], s2=local[1], s12=local[2];
+      var fiber = s1>=0 ? s1/mat.Xt : s1/mat.Xc;
+      var Y = s2>=0 ? mat.Yt : mat.Yc;
+      var transFail = s2/Y;
+      var shearFail = Math.abs(s12/mat.S);
+      return { fiber:fiber, matrixIdx: transFail*transFail + shearFail*shearFail };
+    }
+    var hrBottom = hashinRotem(bottom.localStress, mat);
+    var hrTop = hashinRotem(top.localStress, mat);
+
+    return { ply:p, materialName:mat.name, z0:z0, z1:z1, bottom:bottom, top:top,
+      stressRatioBottom:stressRatioBottom, stressRatioTop:stressRatioTop,
+      strainRatioBottom:strainRatioBottom, strainRatioTop:strainRatioTop,
+      hrBottom:hrBottom, hrTop:hrTop };
+  });
+
+  var critical = { max:-Infinity };
+  plyResults.forEach(function(pr, idx){
+    [{loc:"bottom", r:pr.stressRatioBottom}, {loc:"top", r:pr.stressRatioTop}].forEach(function(o){
+      if(o.r.max > critical.max){
+        var mode = "Shear";
+        if(o.r.max === o.r.r1) mode = "Fiber (Longitudinal)";
+        else if(o.r.max === o.r.r2) mode = "Matrix (Transverse)";
+        critical = { max:o.r.max, plyIndex:idx, loc:o.loc, mode:mode, angle:pr.ply.angle, material:pr.materialName };
+      }
+    });
+  });
+  var criticalStrain = { max:-Infinity };
+  plyResults.forEach(function(pr, idx){
+    [{loc:"bottom", r:pr.strainRatioBottom}, {loc:"top", r:pr.strainRatioTop}].forEach(function(o){
+      if(o.r.max > criticalStrain.max){
+        var mode = "Shear";
+        if(o.r.max === o.r.r1) mode = "Fiber (Longitudinal)";
+        else if(o.r.max === o.r.r2) mode = "Matrix (Transverse)";
+        criticalStrain = { max:o.r.max, plyIndex:idx, loc:o.loc, mode:mode, angle:pr.ply.angle, material:pr.materialName };
+      }
+    });
+  });
+
+  return { A:A, B:B, D:D, NT:NT, MT:MT, NTot:NTot, MTot:MTot, midStrain:midStrain, curvature:curvature,
+    kLevel:kLevel, plyResults:plyResults, critical:critical, criticalStrain:criticalStrain };
+}
+
+function findFailureLoad(materials, plies, loads, scaleConfig){
+  var keys = ["Nx","Ny","Nxy","Mx","My","Mxy"];
+  var baseLoads = { Nx:loads.Nx, Ny:loads.Ny, Nxy:loads.Nxy, Mx:loads.Mx, My:loads.My, Mxy:loads.Mxy };
+  var anyScaling = keys.some(function(k){ return !scaleConfig[k].constant && scaleConfig[k].factor !== 0; });
+  if(!anyScaling) return { converged:false, noScaling:true };
+
+  function loadsAt(k){
+    var out = { dT: loads.dT };
+    keys.forEach(function(key){
+      var cfg = scaleConfig[key];
+      out[key] = cfg.constant ? baseLoads[key] : baseLoads[key]*k*cfg.factor;
+    });
+    return out;
+  }
+  function ratioAt(k){
+    var res = solveLaminate(materials, plies, loadsAt(k));
+    if(!res || res.singular) return { r:Infinity, res:null };
+    return { r:res.critical.max, res:res };
+  }
+  var zeroEval = ratioAt(0);
+  if(zeroEval.r >= 1) return { converged:false, alreadyFailed:true };
+
+  var lo=0, hi=1, guard=0;
+  var hiEval = ratioAt(hi);
+  while(hiEval.r < 1 && guard < 60){ hi *= 2; hiEval = ratioAt(hi); guard++; }
+  if(hiEval.r < 1) return { converged:false };
+
+  var mid, midEval, iterations=0;
+  for(var it=0; it<200; it++){
+    mid = (lo+hi)/2;
+    midEval = ratioAt(mid);
+    iterations++;
+    if(Math.abs(midEval.r-1) < 1e-6) break;
+    if(midEval.r > 1) hi = mid; else lo = mid;
+  }
+  return { converged:true, scale:mid, result:midEval.res, iterations:iterations, loadsAtFailure:loadsAt(mid) };
+}
+
+// ============================================================================
+// STATE
+// ============================================================================
+var uidCounter = 1;
+function uid(){ return "id"+(uidCounter++); }
+
+function defaultMaterials(){
+  return [
+    { id:uid(), name:"IM7/977-3 UD Carbon/Epoxy", E1:2.77e7, E2:1.44e6, G12:1.13e6, v12:0.35, a1:-5e-7, a2:1.24e-5, t:0.005, Xt:4.7e5, Xc:-2.30e5, Yt:8.9e3, Yc:-2.9e4, S:1.09e4 },
+    { id:uid(), name:"AGP 370-5H/3501-6 Woven C/E", E1:11.2e6, E2:10.9e6, G12:0.94e6, v12:0.06, a1:1.9e-6, a2:2.1e-6, t:0.010, Xt:4.7e5, Xc:-2.30e5, Yt:8.9e3, Yc:-2.9e4, S:1.09e4 }
+  ];
+}
+function defaultPlies(materials){
+  var angles = [-60,30,-45,90,0,45,-45,30];
+  return angles.map(function(a){ return { id:uid(), angle:a, materialId:materials[0].id }; });
+}
+
+function defaultScaleConfig(){
+  return {
+    Nx:{factor:1,constant:false}, Ny:{factor:1,constant:false}, Nxy:{factor:1,constant:false},
+    Mx:{factor:1,constant:false}, My:{factor:1,constant:false}, Mxy:{factor:1,constant:false}
+  };
+}
+
+var state = {
+  materials: defaultMaterials(),
+  plies: null,
+  loads: { Nx:100, Ny:50, Nxy:0, Mx:0, My:-3, Mxy:2, dT:0 },
+  units: "imperial",
+  mode: "direct",
+  results: null,
+  iterResult: null,
+  stale: true,
+  scanning: false,
+  activeComponents: { s1:true, s2:true, s12:true },
+  matCollapsed: {},
+  scaleConfig: defaultScaleConfig(),
+  aboutOpen: false
+};
+state.plies = defaultPlies(state.materials);
+
+function matColorMap(){
+  var map = {};
+  state.materials.forEach(function(m,i){ map[m.id] = MAT_PALETTE[i % MAT_PALETTE.length]; });
+  return map;
+}
+// Returns a set (object) of ply array-indices flagged as critical by either the max-stress
+// or max-strain criterion, so the same ply can be cross-highlighted in the input list,
+// the stack view, and the results table.
+function criticalPlyIndexSet(){
+  var set = {};
+  if(state.results && !state.results.singular){
+    set[state.results.critical.plyIndex] = true;
+    set[state.results.criticalStrain.plyIndex] = true;
+  }
+  return set;
+}
+
+// ============================================================================
+// RENDER: STACK SCHEMATIC (SVG string)
+// ============================================================================
+function fiberGlyph(cx, cy, rad, len, color, numLines){
+  var dirX = Math.cos(rad), dirY = -Math.sin(rad);
+  var perpX = -dirY, perpY = dirX;
+  var spacing = Math.max(2, Math.min(4.5, len/(numLines+1)));
+  var half = (numLines-1)/2;
+  var out = "";
+  for(var k=0;k<numLines;k++){
+    var off = (k-half)*spacing;
+    var ox = perpX*off, oy = perpY*off;
+    var x1 = cx - dirX*len/2 + ox, y1 = cy - dirY*len/2 + oy;
+    var x2 = cx + dirX*len/2 + ox, y2 = cy + dirY*len/2 + oy;
+    out += '<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="'+color+'" stroke-width="1.2" opacity="0.9" stroke-linecap="round"/>';
+  }
+  return out;
+}
+
+function renderStackSchematic(height){
+  var matById = {}; state.materials.forEach(function(m){ matById[m.id]=m; });
+  var colorMap = matColorMap();
+  var H = state.plies.reduce(function(s,p){ return s + (matById[p.materialId] ? matById[p.materialId].t : 0); }, 0) || 1;
+  var width=120, pad=4;
+  height = height || 320;
+  var usable = height - 2*pad;
+  var yCursor = pad;
+  var bands = "";
+  // The first ply in the list is treated as the BOTTOM of the physical laminate
+  // (kLevel starts at -H/2 with plies[0]), matching the MATLAB convention. The diagram
+  // is drawn top-down in SVG space, so we draw in reverse list order: the last ply in
+  // the list ends up at the top of the picture, the first ply at the bottom.
+  var critSet = criticalPlyIndexSet();
+  var stackOrder = state.plies.map(function(p,i){ return {p:p, idx:i}; }).slice().reverse();
+  stackOrder.forEach(function(entry){
+    var p = entry.p, plyIdx = entry.idx;
+    var mat = matById[p.materialId];
+    if(!mat) return;
+    var h = (mat.t/H)*usable;
+    var y = yCursor; yCursor += h;
+    var rad = (p.angle*Math.PI)/180;
+    var cx = pad + width/2 - pad*2 + 4, cy = y + h/2;
+    var maxHoriz = (width-2*pad) - 12;
+    var len = Math.min(Math.max(h,6)*1.3, 30, maxHoriz);
+    var numLines = h < 8 ? 1 : (h < 16 ? 2 : (h < 24 ? 3 : 4));
+    var isCritical = !!critSet[plyIdx];
+    bands += '<rect x="'+pad+'" y="'+y+'" width="'+(width-2*pad)+'" height="'+Math.max(h,1)+'" fill="'+colorMap[p.materialId]+'" opacity="0.8" stroke="'+COLORS.bg+'" stroke-width="0.5"/>';
+    bands += fiberGlyph(cx, cy, rad, len, COLORS.bg, numLines);
+    if(h>10){ bands += '<text x="'+(width-4)+'" y="'+(cy+3)+'" font-size="8" text-anchor="end" fill="'+COLORS.bg+'" font-family="JetBrains Mono, monospace" opacity="0.85">'+p.angle+'\u00b0</text>'; }
+    if(isCritical){
+      bands += '<rect x="'+(pad+0.75)+'" y="'+(y+0.75)+'" width="'+(width-2*pad-1.5)+'" height="'+Math.max(h-1.5,0.5)+'" fill="none" stroke="'+COLORS.amber+'" stroke-width="1.6" stroke-dasharray="3,2"/>';
+    }
+  });
+  var scan = "";
+  if(state.scanning){
+    scan = '<rect x="'+pad+'" y="'+pad+'" width="'+(width-2*pad)+'" height="'+usable+'" fill="url(#scanGrad)">' +
+      '<animate attributeName="y" values="'+(pad+usable)+';'+pad+'" dur="0.7s" repeatCount="1"/></rect>';
+  }
+  return '<svg viewBox="0 0 '+(width+60)+' '+height+'" width="100%" height="'+height+'" style="overflow:visible">' +
+    bands +
+    '<rect x="'+pad+'" y="'+pad+'" width="'+(width-2*pad)+'" height="'+usable+'" fill="none" stroke="'+COLORS.border+'" stroke-width="1"/>' +
+    scan +
+    '<defs><linearGradient id="scanGrad" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="'+COLORS.cyan+'" stop-opacity="0"/>' +
+    '<stop offset="45%" stop-color="'+COLORS.cyan+'" stop-opacity="0.35"/>' +
+    '<stop offset="100%" stop-color="'+COLORS.cyan+'" stop-opacity="0"/></linearGradient></defs>' +
+    '<line x1="'+(pad-4)+'" y1="'+(pad+usable/2)+'" x2="'+(width-pad+4)+'" y2="'+(pad+usable/2)+'" stroke="'+COLORS.amber+'" stroke-dasharray="3,2" stroke-width="1"/>' +
+    '<text x="'+(width+4)+'" y="'+(pad+usable/2+3)+'" font-size="8" fill="'+COLORS.amber+'" font-family="JetBrains Mono, monospace">z=0</text>' +
+    '</svg>';
+}
+
+// ============================================================================
+// RENDER: STRESS PROFILE PLOT (SVG string)
+// ============================================================================
+function renderStressPlot(results){
+  if(!results) return "";
+  var u = currentUnits();
+  var plyResults = results.plyResults, kLevel = results.kLevel;
+  var width=460, height=340, padL=64, padR=16, padT=14, padB=34;
+  var plotW = width-padL-padR, plotH = height-padT-padB;
+  var series = [
+    { key:"s1", color:COLORS.cyan }, { key:"s2", color:COLORS.amber }, { key:"s12", color:COLORS.green }
+  ];
+  var points = { s1:[], s2:[], s12:[] };
+  plyResults.forEach(function(pr){
+    points.s1.push([pr.z0, pr.bottom.localStress[0]], [pr.z1, pr.top.localStress[0]]);
+    points.s2.push([pr.z0, pr.bottom.localStress[1]], [pr.z1, pr.top.localStress[1]]);
+    points.s12.push([pr.z0, pr.bottom.localStress[2]], [pr.z1, pr.top.localStress[2]]);
+  });
+  // convert to display units (z: length category, stress: modulus/strength category)
+  ["s1","s2","s12"].forEach(function(k){
+    points[k] = points[k].map(function(p){ return [toDisplayMat(p[0],"t"), toDisplayStress(p[1])]; });
+  });
+  var kLevelD = kLevel.map(function(z){ return toDisplayMat(z,"t"); });
+
+  var maxAbs = 1e-6;
+  series.forEach(function(s){
+    if(state.activeComponents[s.key]) points[s.key].forEach(function(pt){ maxAbs = Math.max(maxAbs, Math.abs(pt[1])); });
+  });
+  maxAbs *= 1.15;
+  var zMin=kLevelD[0], zMax=kLevelD[kLevelD.length-1];
+  function xScale(v){ return padL + plotW/2 + (v/maxAbs)*(plotW/2); }
+  function yScale(z){ return padT + plotH - ((z-zMin)/(zMax-zMin))*plotH; }
+
+  var grid = kLevelD.map(function(z){
+    return '<line x1="'+padL+'" x2="'+(width-padR)+'" y1="'+yScale(z)+'" y2="'+yScale(z)+'" stroke="'+COLORS.grid+'" stroke-width="1"/>';
+  }).join("");
+  // z tick labels: always show first/last, plus interior ones only if there's room (avoid overlap)
+  var zTicks = "";
+  var lastLabelY = null, minLabelGap = 11;
+  kLevelD.forEach(function(z, idx){
+    var y = yScale(z);
+    if(lastLabelY !== null && Math.abs(y-lastLabelY) < minLabelGap && idx !== kLevelD.length-1) return;
+    zTicks += '<text x="'+(padL-6)+'" y="'+(y+3)+'" font-size="8" text-anchor="end" fill="'+COLORS.text2+'" font-family="JetBrains Mono, monospace">'+z.toFixed(3)+'</text>';
+    lastLabelY = y;
+  });
+  var zeroAxis = '<line x1="'+xScale(0)+'" x2="'+xScale(0)+'" y1="'+padT+'" y2="'+(padT+plotH)+'" stroke="'+COLORS.border+'" stroke-width="1.2"/>';
+
+  var lines = "", dots = "";
+  series.forEach(function(s){
+    if(!state.activeComponents[s.key]) return;
+    var pts = points[s.key].map(function(p){ return xScale(p[1])+","+yScale(p[0]); }).join(" ");
+    lines += '<polyline points="'+pts+'" fill="none" stroke="'+s.color+'" stroke-width="2"/>';
+    points[s.key].forEach(function(p){
+      dots += '<circle cx="'+xScale(p[1])+'" cy="'+yScale(p[0])+'" r="2.2" fill="'+s.color+'"/>';
+    });
+  });
+
+  // x-axis ticks at -max, 0, +max
+  var xTickVals = [-maxAbs/1.15, 0, maxAbs/1.15];
+  var xTicks = xTickVals.map(function(v){
+    return '<text x="'+xScale(v)+'" y="'+(padT+plotH+12)+'" font-size="8" text-anchor="middle" fill="'+COLORS.text2+'" font-family="JetBrains Mono, monospace">'+Math.round(v)+'</text>';
+  }).join("");
+
+  return '<svg viewBox="0 0 '+width+' '+height+'" width="100%" height="'+height+'">' +
+    grid + zeroAxis + lines + dots + zTicks + xTicks +
+    '<text x="'+padL+'" y="'+(height-6)+'" font-size="9" fill="'+COLORS.text2+'" font-family="JetBrains Mono, monospace">stress, local ('+u.stress+')</text>' +
+    '<text x="10" y="'+(padT+8)+'" font-size="9" fill="'+COLORS.text2+'" font-family="JetBrains Mono, monospace" transform="rotate(-90 12 '+(padT+plotH/2)+')">z ('+u.length+')</text>' +
+    '</svg>';
+}
+
+// ============================================================================
+// RENDER: FULL APP
+// ============================================================================
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function shortenName(name, max){
+  max = max || 26;
+  if(!name) return name;
+  return name.length > max ? (name.slice(0, max - 1).trim() + "\u2026") : name;
+}
+
+function render(){
+  var colorMap = matColorMap();
+  var materialInUse = {};
+  state.plies.forEach(function(p){ materialInUse[p.materialId] = true; });
+  var matById2 = {};
+  state.materials.forEach(function(m){ matById2[m.id] = m; });
+
+  var active = document.activeElement;
+  var focusKey = active && active.dataset ? active.dataset.key : null;
+  var selStart = active && active.selectionStart !== undefined ? active.selectionStart : null;
+  var selEnd = active && active.selectionEnd !== undefined ? active.selectionEnd : null;
+
+  var html = "";
+
+  html += '<div class="header">' +
+    '<div class="brand"><div class="brand-icon">'+icon("layers",18,COLORS.cyan)+'</div>' +
+    '<div><div class="brand-title display">C.L.A.S.P</div><div class="brand-sub">Classical Lamination Analytical Solver Program</div></div></div>' +
+    '<div class="header-actions">' +
+    '<div class="unit-toggle">' +
+    '<button class="unit-btn'+(state.units==="imperial"?" active":"")+'" data-action="set-units" data-units="imperial">Imperial</button>' +
+    '<button class="unit-btn'+(state.units==="metric"?" active":"")+'" data-action="set-units" data-units="metric">Metric</button>' +
+    '</div>' +
+    '<button class="reset-btn" data-action="reset-all" title="Clear all materials, plies, and loads">'+icon("reset",13)+'Reset</button>' +
+    '<button class="export-btn" data-action="export-pdf" '+((state.results && !state.results.singular) ? '' : 'disabled')+' title="'+((state.results && !state.results.singular) ? 'Export a print-ready report (choose Save as PDF in the print dialog)' : 'Run an analysis first')+'">'+icon("download",13)+'Export PDF</button>' +
+    '<button class="about-btn" data-action="toggle-about" title="About C.L.A.S.P">'+icon("info",15)+'</button>' +
+    '</div>' +
+    '</div>';
+
+  if(state.aboutOpen){
+    html += '<div class="modal-backdrop" data-action="close-about">' +
+      '<div class="modal-card" data-action="noop">' +
+      '<button class="modal-close" data-action="close-about" title="Close">'+icon("close",16)+'</button>' +
+      '<div class="modal-title display">About C.L.A.S.P</div>' +
+      // ====================================================================
+      // EDIT ME: replace the paragraph(s) below with your own About text.
+      // Keep it brief — this is a quick-orientation modal, not the README.
+      // ====================================================================
+      '<div class="modal-body">' +
+      '<p>C.L.A.S.P (Classical Lamination Analytical Solver Program) is a browser-based Classical Laminate Theory solver for composite laminates. Originating from a makeshift MATLAB tool to solve homework problems, this program implements those fundamental mechanics and equations with a straightforward and user-friendly interface.</p>' +
+      '<p>This program computes the ABD stiffness matrix, ply-by-ply stresses and strains, and first-ply failure loads (Max Stress, Max Strain, and Hashin&ndash;Rotem criteria), with support for various layups, multiple materials, in both Imperial and Metric units. An iterative process can also be used to determine the loading under which an arbitrary layup may fail, complete with per-component scaling and constant holds.</p>' +
+      '<p>The underlying math has been independently cross-checked and verified against the original MATLAB implementation to 6 significant figures.</p>' +
+      '<p><a href="https://github.com/toanle6543-max/CLASP" target="_blank" rel="noopener">View source &amp; full write-up on GitHub &rarr;</a></p>' +
+      '</div>' +
+      '</div></div>';
+  }
+
+  html += '<div class="grid-top">';
+
+  html += '<div class="panel col-4">' +
+    '<div class="panel-head-row"><div class="section-head">'+icon("flask",16,COLORS.cyan)+
+    '<div><div class="section-title display">MATERIALS</div><div class="section-sub">Ply-level properties library</div></div></div>' +
+    '<button class="icon-btn" data-action="add-material" title="Add material">'+icon("plus",14)+'</button></div>' +
+    '<div class="mat-list">';
+  state.materials.forEach(function(m){
+    var collapsed = !!state.matCollapsed[m.id];
+    html += '<div class="panel2">' +
+      '<div class="mat-card-head">' +
+      '<div class="swatch" style="background:'+colorMap[m.id]+'"></div>' +
+      '<input class="mat-name-input" type="text" data-key="matname-'+m.id+'" data-action="update-material" data-id="'+m.id+'" data-field="name" value="'+esc(m.name)+'"/>' +
+      '<button class="icon-btn" data-action="toggle-material" data-id="'+m.id+'" title="Toggle">'+icon(collapsed?"chevronDown":"chevronUp",14)+'</button>' +
+      '<button class="icon-btn danger" data-action="remove-material" data-id="'+m.id+'" title="'+(materialInUse[m.id]?"In use by a ply":"Remove")+'">'+icon("trash",14)+'</button>' +
+      '</div>';
+    if(!collapsed){
+      html += '<div class="mat-fields">' +
+        '<div class="full mat-section-label">Moduli</div>' +
+        matField(m,"E1") + matField(m,"E2") + matField(m,"G12") + '<div></div>' +
+        '<div class="full mat-section-label">Poisson\u2019s Ratio</div>' +
+        matField(m,"v12") + '<div></div>' +
+        '<div class="full mat-section-label">Coefficients of Thermal Expansion</div>' +
+        matField(m,"a1") + matField(m,"a2") +
+        '<div class="full mat-section-label">Geometry</div>' +
+        matField(m,"t") + '<div></div>' +
+        '<div class="full mat-section-label">Ultimate Strengths</div>' +
+        matField(m,"Xt") + matField(m,"Xc") + matField(m,"Yt") + matField(m,"Yc") + matField(m,"S") +
+        '</div>';
+    }
+    html += '</div>';
+  });
+  if(state.materials.length===0){
+    html += '<div class="empty-note">No materials yet &mdash; add one above.</div>';
+  }
+  html += '</div></div>';
+
+  var totalThickness = state.plies.reduce(function(s,p){ var mm=state.materials.find(function(x){return x.id===p.materialId;}); return s+(mm?mm.t:0); },0);
+  var totalThicknessD = toDisplayMat(totalThickness, "t");
+  html += '<div class="panel col-4">' +
+    '<div class="panel-head-row"><div class="section-head">'+icon("stack",16,COLORS.cyan)+
+    '<div><div class="section-title display">LAYUP</div><div class="section-sub">'+state.plies.length+' plies &middot; '+totalThicknessD.toFixed(3)+' '+currentUnits().length+' thick</div></div></div>' +
+    '<button class="icon-btn" data-action="add-ply" title="Add ply" '+(state.materials.length===0?"disabled":"")+'>'+icon("plus",14)+'</button></div>' +
+    '<div class="mirror-row">' +
+    '<button class="mirror-btn" data-action="mirror-layup" data-dir="up" '+(state.plies.length===0?"disabled":"")+' title="Append a mirrored copy above the current stack (symmetric about the top face)">'+icon("arrowUp",12)+' Mirror up</button>' +
+    '<button class="mirror-btn" data-action="mirror-layup" data-dir="down" '+(state.plies.length===0?"disabled":"")+' title="Append a mirrored copy below the current stack (symmetric about the bottom face)">'+icon("arrowDown",12)+' Mirror down</button>' +
+    '</div>' +
+    '<div class="layup-body">' +
+    '<div class="ply-list" id="plyListEl">';
+  if(state.plies.length===0){
+    html += '<div class="empty-note">'+(state.materials.length===0 ? "Add a material first, then add plies." : "No plies yet &mdash; add one above.")+'</div>';
+  }
+  var critSet = criticalPlyIndexSet();
+  state.plies.map(function(p,i){ return {p:p, idx:i}; }).slice().reverse().forEach(function(entry){
+    var p = entry.p, i = entry.idx;
+    var isCritical = !!critSet[i];
+    html += '<div class="panel2 ply-row'+(isCritical?' ply-row-critical':'')+'" title="'+(isCritical?'Flagged as a critical ply in the current results':'')+'">' +
+      '<span class="ply-idx mono">'+(i+1)+'</span>' +
+      (isCritical ? '<span class="crit-badge">'+icon("star",10,COLORS.amber)+'</span>' : '') +
+      '<div class="swatch" style="background:'+colorMap[p.materialId]+'"></div>' +
+      '<input class="ply-angle" type="text" inputmode="decimal" data-key="plyangle-'+p.id+'" data-action="update-ply" data-id="'+p.id+'" data-field="angle" value="'+p.angle+'"/>' +
+      '<span class="deg">\u00b0</span>' +
+      '<select class="ply-mat-select" data-action="update-ply" data-id="'+p.id+'" data-field="materialId" title="'+esc((matById2[p.materialId]||{}).name||'')+'">' +
+      state.materials.map(function(m){ return '<option value="'+m.id+'"'+(m.id===p.materialId?' selected':'')+' title="'+esc(m.name)+'">'+esc(shortenName(m.name,24))+'</option>'; }).join("") +
+      '</select>' +
+      '<button class="icon-btn" data-action="move-ply" data-id="'+p.id+'" data-dir="1" title="Move up (toward top of laminate)">'+icon("arrowUp",12)+'</button>' +
+      '<button class="icon-btn" data-action="move-ply" data-id="'+p.id+'" data-dir="-1" title="Move down (toward bottom/ply 1)">'+icon("arrowDown",12)+'</button>' +
+      '<button class="icon-btn danger" data-action="remove-ply" data-id="'+p.id+'" title="Remove ply">'+icon("trash",12)+'</button>' +
+      '</div>';
+  });
+  html += '</div>' +
+    '<div class="stack-col"><div class="stack-label">stack view</div><div class="stack-endlabel">top</div><div id="stackContainer">' + renderStackSchematic(320) + '</div><div class="stack-endlabel">bottom (ply 1)</div></div>' +
+    '</div></div>';
+
+  html += '<div class="panel col-4">' +
+    '<div class="section-head">'+icon("gauge",16,COLORS.cyan)+
+    '<div><div class="section-title display">LOADS &amp; SOLVE MODE</div><div class="section-sub">Mechanical + thermal loading</div></div></div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">' +
+    loadField("Nx") + loadField("Ny") + loadField("Nxy") +
+    loadField("Mx") + loadField("My") + loadField("Mxy") +
+    '</div>' +
+    loadField("dT") +
+    '<div style="margin-top:16px;">' +
+    '<div class="section-sub" style="margin-bottom:6px;">solve mode</div>' +
+    '<div class="mode-toggle">' +
+    '<button class="mode-btn'+(state.mode==="direct"?" active-direct":"")+'" data-action="set-mode" data-mode="direct">Direct Solve</button>' +
+    '<button class="mode-btn'+(state.mode==="iterative"?" active-iter":"")+'" data-action="set-mode" data-mode="iterative">Find Failure Load</button>' +
+    '</div>' +
+    '<div class="mode-note">'+(state.mode==="direct" ? "Reports stresses/strains and margin at the loads above." : "By default all components scale together with k. Customize below to scale components at different rates or hold some constant.")+'</div>' +
+    (state.mode==="iterative" ? renderScaleConfig() : '') +
+    '</div>' +
+    '<button class="run-btn" data-action="run" '+(state.plies.length===0?"disabled":"")+'>'+icon("play",15,COLORS.bg)+' Run Analysis</button>' +
+    (state.stale && state.results ? '<div class="stale-note">Inputs changed &mdash; results below are stale</div>' : '') +
+    '</div>';
+
+  html += '</div>';
+
+  if(state.results && !state.results.singular){
+    var results = state.results;
+    html += '<div class="results">';
+
+    html += '<div class="cards3">';
+    html += '<div class="panel"><div class="card-label">MIDPLANE STRAIN</div>' +
+      '<div class="mono" style="font-size:13px;">' +
+      '&epsilon;x '+results.midStrain[0].toExponential(3)+'<br/>' +
+      '&epsilon;y '+results.midStrain[1].toExponential(3)+'<br/>' +
+      '&gamma;xy '+results.midStrain[2].toExponential(3)+'</div>' +
+      '<div class="card-label" style="margin-top:8px;">CURVATURE (1/'+currentUnits().length+')</div>' +
+      '<div class="mono" style="font-size:13px;">' +
+      '&kappa;x '+toDisplayCurvature(results.curvature[0]).toExponential(3)+'<br/>' +
+      '&kappa;y '+toDisplayCurvature(results.curvature[1]).toExponential(3)+'<br/>' +
+      '&kappa;xy '+toDisplayCurvature(results.curvature[2]).toExponential(3)+'</div></div>';
+
+    html += criticalCard("CRITICAL PLY &mdash; MAX STRESS CRITERION", results.critical);
+    html += criticalCard("CRITICAL PLY &mdash; MAX STRAIN CRITERION", results.criticalStrain);
+    html += '</div>';
+
+    html += renderABDPanel(results);
+    html += renderThermalPanel(results);
+
+    if(state.mode==="iterative"){
+      var ir = state.iterResult;
+      html += '<div class="panel2" style="padding:16px;border-color:'+COLORS.amber+';">' +
+        '<div class="card-label" style="color:'+COLORS.amber+';">FIRST-PLY FAILURE LOAD (bisection, \u0394T fixed)</div>';
+      if(ir && ir.converged){
+        var lf = ir.loadsAtFailure;
+        var uu = currentUnits();
+        function tag(k){ return state.scaleConfig[k].constant ? ' <span style="color:'+COLORS.text2+'">(constant)</span>' : ''; }
+        html += '<div class="mono" style="font-size:13px;">' +
+          'scale factor k = '+ir.scale.toFixed(5)+' ('+ir.iterations+' iterations)<br/>' +
+          'Nx = '+toDisplayLoad(lf.Nx,"Nx").toFixed(2)+tag('Nx')+' '+uu.forceLen+', Ny = '+toDisplayLoad(lf.Ny,"Ny").toFixed(2)+tag('Ny')+', Nxy = '+toDisplayLoad(lf.Nxy,"Nxy").toFixed(2)+tag('Nxy')+'<br/>' +
+          'Mx = '+toDisplayLoad(lf.Mx,"Mx").toFixed(2)+tag('Mx')+' '+uu.force+', My = '+toDisplayLoad(lf.My,"My").toFixed(2)+tag('My')+', Mxy = '+toDisplayLoad(lf.Mxy,"Mxy").toFixed(2)+tag('Mxy')+'<br/>' +
+          'Critical ply: '+(ir.result.critical.plyIndex+1)+' ('+ir.result.critical.angle+'\u00b0) &mdash; '+ir.result.critical.mode +
+          '</div>';
+      } else if(ir && ir.alreadyFailed){
+        html += '<div style="color:'+COLORS.red+';font-size:13px;">Already exceeds allowables from the constant/thermal loads alone, before any scaled component is applied.</div>';
+      } else if(ir && ir.noScaling){
+        html += '<div style="color:'+COLORS.red+';font-size:13px;">All components are held constant \u2014 nothing to scale. Uncheck &ldquo;hold constant&rdquo; on at least one component.</div>';
+      } else {
+        html += '<div style="color:'+COLORS.red+';font-size:13px;">Bisection did not converge &mdash; check load direction and material strengths.</div>';
+      }
+      html += '</div>';
+    }
+
+    var critPr = results.plyResults[results.critical.plyIndex];
+    var hr = results.critical.loc === "bottom" ? critPr.hrBottom : critPr.hrTop;
+    html += '<div class="panel"><div class="card-label">HASHIN&ndash;ROTEM (quadratic matrix failure) AT CRITICAL PLY</div>' +
+      '<div class="mono" style="font-size:13px;">' +
+      'Fiber failure index = '+hr.fiber.toFixed(3)+' '+(hr.fiber>=1?'<span style="color:'+COLORS.red+'">(FAIL)</span>':'<span style="color:'+COLORS.green+'">(ok)</span>')+'<br/>' +
+      'Matrix failure index (transFail\u00b2 + shearFail\u00b2) = '+hr.matrixIdx.toFixed(3)+' '+(hr.matrixIdx>=1?'<span style="color:'+COLORS.red+'">(FAIL)</span>':'<span style="color:'+COLORS.green+'">(ok)</span>') +
+      '</div></div>';
+
+    html += '<div class="grid2">';
+    html += '<div class="panel">' +
+      '<div class="panel-head-row" style="margin-bottom:8px;"><div class="card-label" style="margin-bottom:0;">THROUGH-THICKNESS LOCAL STRESS ('+currentUnits().stress+')</div>' +
+      '<div style="display:flex;gap:6px;">' +
+      compToggle("s1","\u03c31",COLORS.cyan) + compToggle("s2","\u03c32",COLORS.amber) + compToggle("s12","\u03c412",COLORS.green) +
+      '</div></div>' +
+      renderStressPlot(results) +
+      '</div>';
+
+    html += '<div class="panel" style="overflow-x:auto;">' +
+      '<div class="card-label">PLY-BY-PLY RESULTS</div>' +
+      '<table class="mono"><thead><tr>' +
+      '<th>Ply</th><th>&theta;</th><th>loc</th><th class="right">&sigma;1</th><th class="right">&sigma;2</th><th class="right">&tau;12</th><th class="right">ratio</th><th class="center">status</th>' +
+      '</tr></thead><tbody>';
+    var critSetTable = criticalPlyIndexSet();
+    results.plyResults.map(function(pr,i){ return {pr:pr, idx:i}; }).slice().reverse().forEach(function(entry){
+      var pr = entry.pr, i = entry.idx;
+      var isCritical = !!critSetTable[i];
+      ["top","bottom"].forEach(function(loc){
+        var st = loc==="bottom" ? pr.bottom : pr.top;
+        var ratio = loc==="bottom" ? pr.stressRatioBottom : pr.stressRatioTop;
+        var fail = ratio.max >= 1;
+        var s1d = toDisplayStress(st.localStress[0]), s2d = toDisplayStress(st.localStress[1]), s12d = toDisplayStress(st.localStress[2]);
+        html += '<tr class="'+(isCritical?"critical-row":"")+'"><td>'+(isCritical?'<span class="crit-badge">'+icon("star",9,COLORS.amber)+'</span> ':'')+(i+1)+'</td><td>'+pr.ply.angle+'\u00b0</td>' +
+          '<td style="color:'+COLORS.text2+'">'+loc+'</td>' +
+          '<td class="right">'+s1d.toFixed(0)+'</td>' +
+          '<td class="right">'+s2d.toFixed(0)+'</td>' +
+          '<td class="right">'+s12d.toFixed(0)+'</td>' +
+          '<td class="right">'+ratio.max.toFixed(2)+'</td>' +
+          '<td class="center"><span class="badge '+(fail?"badge-fail":"badge-ok")+'">'+(fail?"FAIL":"OK")+'</span></td></tr>';
+      });
+    });
+    html += '</tbody></table></div>';
+    html += '</div>';
+
+    html += '</div>';
+  } else if(state.results && state.results.singular){
+    html += '<div class="panel" style="margin-top:20px;border-color:'+COLORS.red+';color:'+COLORS.red+';font-size:13px;">' +
+      'The ABD matrix is singular for this layup &mdash; check that plies/materials are configured correctly.</div>';
+  }
+
+  document.getElementById("app").innerHTML = html;
+
+  if(focusKey){
+    var el = document.querySelector('[data-key="'+focusKey+'"]');
+    if(el){
+      el.focus();
+      if(selStart !== null && el.setSelectionRange){
+        try{ el.setSelectionRange(selStart, selEnd); }catch(e){}
+      }
+    }
+  }
+
+  requestAnimationFrame(syncStackHeight);
+  clearTimeout(window.__plybenchSyncT1); clearTimeout(window.__plybenchSyncT2);
+  window.__plybenchSyncT1 = setTimeout(syncStackHeight, 80);
+  window.__plybenchSyncT2 = setTimeout(syncStackHeight, 350);
+}
+
+function syncStackHeight(){
+  var listEl = document.getElementById("plyListEl");
+  var stackEl = document.getElementById("stackContainer");
+  if(!listEl || !stackEl) return;
+  var h = listEl.getBoundingClientRect().height;
+  if(h < 40) h = 320;
+  stackEl.innerHTML = renderStackSchematic(h);
+}
+// Live-refreshes just the stack schematic (e.g. while typing a ply's orientation) without
+// a full page render, so it doesn't disturb focus/cursor in whatever field is being edited.
+function refreshStackViewOnly(){
+  var stackEl = document.getElementById("stackContainer");
+  if(!stackEl) return;
+  var h = stackEl.getBoundingClientRect().height || 320;
+  stackEl.innerHTML = renderStackSchematic(h);
+}
+window.addEventListener("resize", function(){ requestAnimationFrame(syncStackHeight); });
+if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ requestAnimationFrame(syncStackHeight); }); }
+
+function matField(m, field){
+  var def = getFieldDefs()[field];
+  var labelText = def.unit ? (def.label+' ('+def.unit+')') : def.label;
+  var displayVal = toDisplayMat(m[field], field);
+  return '<label class="field"><span class="tip" data-tooltip="'+esc(def.tip)+'">'+labelText+'</span>' +
+    '<input type="text" inputmode="decimal" data-key="mat-'+m.id+'-'+field+'" data-action="update-material" data-id="'+m.id+'" data-field="'+field+'" value="'+fmtNum(displayVal)+'"/>' +
+    '</label>';
+}
+var LOAD_DEFS = {
+  Nx:  "Applied normal force resultant per unit width, x-direction",
+  Ny:  "Applied normal force resultant per unit width, y-direction",
+  Nxy: "Applied in-plane shear force resultant per unit width",
+  Mx:  "Applied bending moment resultant per unit width, about the y-axis",
+  My:  "Applied bending moment resultant per unit width, about the x-axis",
+  Mxy: "Applied twisting moment resultant per unit width",
+  dT:  "Temperature change applied to the laminate (e.g. cure temperature to service temperature)"
+};
+function renderScaleConfig(){
+  var keys = ["Nx","Ny","Nxy","Mx","My","Mxy"];
+  var rows = keys.map(function(k){
+    var cfg = state.scaleConfig[k];
+    return '<div class="scale-row">' +
+      '<span class="scale-label mono">'+k+'</span>' +
+      '<input type="text" inputmode="decimal" class="scale-factor mono" data-key="scalefactor-'+k+'" data-action="update-scale-factor" data-field="'+k+'" value="'+cfg.factor+'" '+(cfg.constant?'disabled':'')+'/>' +
+      '<label class="scale-const"><input type="checkbox" data-action="toggle-scale-constant" data-field="'+k+'" '+(cfg.constant?'checked':'')+'/>hold constant</label>' +
+      '</div>';
+  }).join("");
+  return '<div class="scale-config">' +
+    '<div class="section-sub" style="margin-bottom:2px;">per-component scaling (\u00d7k)</div>' +
+    rows +
+    '</div>';
+}
+function loadField(field){
+  var u = currentUnits();
+  var unitStr = field==="dT" ? u.temp : (field.charAt(0)==="M" ? u.force : u.forceLen);
+  var symbol = field==="dT" ? "\u0394T" : field;
+  var label = symbol+' ('+unitStr+')' + (field==="dT" ? ', cure-to-service' : '');
+  var tip = LOAD_DEFS[field];
+  var displayVal = toDisplayLoad(state.loads[field], field);
+  return '<label class="field"><span class="tip" data-tooltip="'+esc(tip)+'">'+label+'</span>' +
+    '<input type="text" inputmode="decimal" data-key="load-'+field+'" data-action="update-load" data-field="'+field+'" value="'+fmtNum(displayVal)+'"/>' +
+    '</label>';
+}
+function compToggle(key, label, color){
+  var active = state.activeComponents[key];
+  return '<button class="comp-toggle" data-action="toggle-component" data-key="'+key+'" style="border:1px solid '+color+';background:'+(active?color:'transparent')+';color:'+(active?COLORS.bg:color)+'">'+label+'</button>';
+}
+function fmtMatrixVal(v){
+  if(!isFinite(v)) return String(v);
+  var a = Math.abs(v);
+  if(a===0) return "0";
+  if(a >= 1e-3 && a < 1e7) return parseFloat(v.toPrecision(6)).toString();
+  return v.toExponential(5);
+}
+function renderMatrixGrid(matrix, cat, epsilon){
+  var cells = "";
+  for(var r=0;r<3;r++) for(var c=0;c<3;c++){
+    var raw = matrix[r][c];
+    var val = Math.abs(raw) < epsilon ? 0 : toDisplayABD(raw, cat);
+    cells += '<div class="abd-cell mono">'+fmtMatrixVal(val)+'</div>';
+  }
+  return '<div class="abd-grid">'+cells+'</div>';
+}
+function renderThermalPanel(results){
+  var u = currentUnits();
+  var dTd = toDisplayLoad(state.loads.dT, "dT");
+  return '<div class="panel">' +
+    '<div class="card-label">THERMAL EQUIVALENT LOAD & MOMENT <span style="font-weight:400;">(\u0394T = '+fmtNum(dTd)+' '+u.temp+')</span></div>' +
+    '<div class="mono" style="font-size:13px;">' +
+    'NTx '+fmtNum(toDisplayLoad(results.NT[0],"Nx"))+'<br/>' +
+    'NTy '+fmtNum(toDisplayLoad(results.NT[1],"Ny"))+'<br/>' +
+    'NTxy '+fmtNum(toDisplayLoad(results.NT[2],"Nxy"))+' <span style="color:'+COLORS.text2+'">('+u.forceLen+')</span>' +
+    '</div>' +
+    '<div class="card-label" style="margin-top:10px;">MT</div>' +
+    '<div class="mono" style="font-size:13px;">' +
+    'MTx '+fmtNum(toDisplayLoad(results.MT[0],"Mx"))+'<br/>' +
+    'MTy '+fmtNum(toDisplayLoad(results.MT[1],"My"))+'<br/>' +
+    'MTxy '+fmtNum(toDisplayLoad(results.MT[2],"Mxy"))+' <span style="color:'+COLORS.text2+'">('+u.force+')</span>' +
+    '</div></div>';
+}
+function renderABDPanel(results){
+  var u = currentUnits();
+  // Symmetric/balanced layups produce entries that are mathematically exactly zero
+  // (e.g. B for a symmetric stack, A16/A26 for balanced angle pairs), but floating-point
+  // arithmetic leaves tiny residues (~1e-10 to 1e-13) instead of a clean 0. Snap anything
+  // negligible relative to the laminate's own stiffness scale (set by A) down to zero so
+  // the display shows the true mathematical answer rather than numerical noise.
+  var maxA = 0;
+  for(var r=0;r<3;r++) for(var c=0;c<3;c++) maxA = Math.max(maxA, Math.abs(results.A[r][c]));
+  var epsilon = Math.max(maxA * 1e-9, 1e-9);
+  return '<div class="panel">' +
+    '<div class="card-label">ABD STIFFNESS MATRIX</div>' +
+    '<div class="abd-wrap">' +
+    '<div><div class="abd-block-label">A &nbsp;<span class="abd-block-unit">('+u.forceLen+')</span></div>' + renderMatrixGrid(results.A, "A", epsilon) + '</div>' +
+    '<div><div class="abd-block-label">B &nbsp;<span class="abd-block-unit">('+u.force+')</span></div>' + renderMatrixGrid(results.B, "B", epsilon) + '</div>' +
+    '<div><div class="abd-block-label">D &nbsp;<span class="abd-block-unit">('+u.flexural+')</span></div>' + renderMatrixGrid(results.D, "D", epsilon) + '</div>' +
+    '</div></div>';
+}
+function criticalCard(title, crit){
+  var fail = crit.max >= 1;
+  return '<div class="panel">' +
+    '<div class="card-label">'+title+'</div>' +
+    '<div class="status-row">'+icon(fail?"alertTriangle":"checkCircle",16,fail?COLORS.red:COLORS.green)+
+    '<span class="status-text">'+(fail?"FAILS at given load":"OK at given load")+'</span></div>' +
+    '<div class="sub-text">Ply '+(crit.plyIndex+1)+' ('+crit.angle+'\u00b0, '+esc(crit.material)+'), '+crit.loc+'</div>' +
+    '<div class="sub-text">Mode: '+crit.mode+'</div>' +
+    '<div class="mono" style="font-size:13px;margin-top:8px;">Stress/strain ratio = '+crit.max.toFixed(3)+'<br/>Reserve factor = '+(1/crit.max).toFixed(3)+'</div>' +
+    '</div>';
+}
+
+// ============================================================================
+// ACTIONS
+// ============================================================================
+function markStale(){ state.stale = true; }
+
+function addMaterial(){
+  var id = uid();
+  state.materials.push({ id:id, name:"Material "+(state.materials.length+1), E1:1e7, E2:1e6, G12:5e5, v12:0.3, a1:0, a2:0, t:0.005, Xt:1e5, Xc:-1e5, Yt:5e3, Yc:-1e4, S:8e3 });
+  markStale(); render();
+}
+function removeMaterial(id){
+  if(state.materials.length<=1) return;
+  if(state.plies.some(function(p){ return p.materialId===id; })) return;
+  state.materials = state.materials.filter(function(m){ return m.id!==id; });
+  markStale(); render();
+}
+function commitMaterial(id, field, value){
+  var m = state.materials.find(function(x){ return x.id===id; });
+  if(!m) return;
+  if(field==="name"){ m.name = value; }
+  else { var v=parseFloat(value); if(isNaN(v)) return; m[field]=toCanonicalMat(v, field); }
+  markStale();
+}
+function updateMaterial(id, field, value){ commitMaterial(id, field, value); render(); }
+function mirrorLayup(direction){
+  if(state.plies.length === 0) return;
+  // Clone with fresh ids (each ply needs its own identity), reversed order.
+  var mirrored = state.plies.slice().reverse().map(function(p){
+    return { id: uid(), angle: p.angle, materialId: p.materialId };
+  });
+  if(direction === "up"){
+    // New mirrored half sits above the current top, symmetric about the top face.
+    state.plies = state.plies.concat(mirrored);
+  } else {
+    // New mirrored half sits below the current bottom, symmetric about the bottom face.
+    state.plies = mirrored.concat(state.plies);
+  }
+  markStale();
+  render();
+}
+function addPly(){
+  state.plies.push({ id:uid(), angle:0, materialId:state.materials[0].id });
+  markStale(); render();
+}
+function removePly(id){ state.plies = state.plies.filter(function(p){ return p.id!==id; }); markStale(); render(); }
+function commitPly(id, field, value){
+  var p = state.plies.find(function(x){ return x.id===id; });
+  if(!p) return;
+  if(field==="angle"){ var v=parseFloat(value); if(isNaN(v)) return; p.angle=v; }
+  else { p.materialId = value; }
+  markStale();
+}
+function updatePly(id, field, value){ commitPly(id, field, value); render(); }
+function movePly(id, dir){
+  var idx = state.plies.findIndex(function(p){ return p.id===id; });
+  var newIdx = idx+dir;
+  if(newIdx<0 || newIdx>=state.plies.length) return;
+  var tmp = state.plies[idx]; state.plies[idx]=state.plies[newIdx]; state.plies[newIdx]=tmp;
+  markStale(); render();
+}
+function commitLoad(field, value){
+  var v = parseFloat(value); if(isNaN(v)) return;
+  state.loads[field] = toCanonicalLoad(v, field); markStale();
+}
+function updateLoad(field, value){ commitLoad(field, value); render(); }
+function setMode(m){ state.mode = m; render(); }
+function toggleComponent(key){ state.activeComponents[key] = !state.activeComponents[key]; render(); }
+function toggleMaterialCollapse(id){ state.matCollapsed[id] = !state.matCollapsed[id]; render(); }
+function setUnits(u){ if(u!==state.units){ state.units = u; render(); } }
+function commitScaleFactor(field, value){
+  var v = parseFloat(value); if(isNaN(v)) return;
+  state.scaleConfig[field].factor = v; markStale();
+}
+function updateScaleFactor(field, value){ commitScaleFactor(field, value); render(); }
+function toggleScaleConstant(field){
+  state.scaleConfig[field].constant = !state.scaleConfig[field].constant;
+  markStale(); render();
+}
+
+// Reformats a single field's displayed text on blur (e.g. 27700000 -> 2.77e+7) without
+// touching any other DOM — a full render() here would destroy/recreate the whole page
+// mid-click if the blur was caused by clicking another button, silently swallowing that click.
+function reformatField(el){
+  var action = el.dataset.action;
+  if(action==="update-material"){
+    var field = el.dataset.field;
+    if(field==="name") return;
+    var m = state.materials.find(function(x){ return x.id===el.dataset.id; });
+    if(!m) return;
+    el.value = fmtNum(toDisplayMat(m[field], field));
+  } else if(action==="update-ply" && el.dataset.field==="angle"){
+    var p = state.plies.find(function(x){ return x.id===el.dataset.id; });
+    if(!p) return;
+    el.value = fmtNum(p.angle);
+  } else if(action==="update-load"){
+    var lf = el.dataset.field;
+    el.value = fmtNum(toDisplayLoad(state.loads[lf], lf));
+  } else if(action==="update-scale-factor"){
+    var sf = el.dataset.field;
+    el.value = fmtNum(state.scaleConfig[sf].factor);
+  }
+}
+function exportPdf(){
+  if(!state.results || state.results.singular) return;
+  var ts = document.getElementById("printTimestamp");
+  if(ts){
+    var now = new Date();
+    ts.textContent = "Report generated " + now.toLocaleString() + " \u00b7 " + (state.units==="metric"?"Metric":"Imperial") + " units" + (state.stale ? " \u00b7 note: inputs changed since last Run Analysis" : "");
+  }
+  window.print();
+}
+function resetAll(){
+  if(!window.confirm("Reset will remove all materials, plies, and loads, and clear results. Continue?")) return;
+  state.materials = [];
+  state.plies = [];
+  state.loads = { Nx:0, Ny:0, Nxy:0, Mx:0, My:0, Mxy:0, dT:0 };
+  state.mode = "direct";
+  state.results = null;
+  state.iterResult = null;
+  state.stale = true;
+  state.scanning = false;
+  state.activeComponents = { s1:true, s2:true, s12:true };
+  state.matCollapsed = {};
+  state.scaleConfig = defaultScaleConfig();
+  render();
+}
+
+function runAnalysis(){
+  state.scanning = true;
+  render();
+  setTimeout(function(){
+    state.scanning = false;
+    var res = solveLaminate(state.materials, state.plies, state.loads);
+    state.results = res;
+    if(state.mode==="iterative"){
+      state.iterResult = findFailureLoad(state.materials, state.plies, state.loads, state.scaleConfig);
+    } else {
+      state.iterResult = null;
+    }
+    state.stale = false;
+    render();
+  }, 750);
+}
+
+// ============================================================================
+// EVENT DELEGATION
+// ============================================================================
+document.addEventListener("click", function(e){
+  var el = e.target.closest("[data-action]");
+  if(!el) return;
+  var action = el.dataset.action;
+  switch(action){
+    case "add-material": addMaterial(); break;
+    case "remove-material": removeMaterial(el.dataset.id); break;
+    case "toggle-material": toggleMaterialCollapse(el.dataset.id); break;
+    case "add-ply": addPly(); break;
+    case "remove-ply": removePly(el.dataset.id); break;
+    case "move-ply": movePly(el.dataset.id, parseInt(el.dataset.dir,10)); break;
+    case "set-mode": setMode(el.dataset.mode); break;
+    case "run": runAnalysis(); break;
+    case "toggle-component": toggleComponent(el.dataset.key); break;
+    case "reset-all": resetAll(); break;
+    case "set-units": setUnits(el.dataset.units); break;
+    case "export-pdf": exportPdf(); break;
+    case "mirror-layup": mirrorLayup(el.dataset.dir); break;
+    case "toggle-about": state.aboutOpen = !state.aboutOpen; render(); break;
+    case "close-about": state.aboutOpen = false; render(); break;
+    case "toggle-scale-constant": toggleScaleConstant(el.dataset.field); break;
+  }
+});
+document.addEventListener("input", function(e){
+  var el = e.target.closest("[data-action]");
+  if(!el) return;
+  var action = el.dataset.action;
+  // Numeric fields: commit to state silently while typing, but don't re-render/reformat
+  // until the field is blurred or Run Analysis is clicked (avoids the display jumping
+  // to exponential notation, e.g. 27700000 -> 2.77e+7, mid-keystroke).
+  if(action==="update-material") commitMaterial(el.dataset.id, el.dataset.field, el.value);
+  else if(action==="update-ply" && el.dataset.field==="angle"){ commitPly(el.dataset.id, "angle", el.value); refreshStackViewOnly(); }
+  else if(action==="update-load") commitLoad(el.dataset.field, el.value);
+  else if(action==="update-scale-factor") commitScaleFactor(el.dataset.field, el.value);
+});
+document.addEventListener("focusout", function(e){
+  var el = e.target.closest("[data-action]");
+  if(!el) return;
+  reformatField(el);
+});
+document.addEventListener("change", function(e){
+  var el = e.target.closest("[data-action]");
+  if(!el) return;
+  if(el.dataset.action==="update-ply" && el.dataset.field==="materialId") updatePly(el.dataset.id, "materialId", el.value);
+});
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape" && state.aboutOpen){ state.aboutOpen = false; render(); }
+});
+
+render();
+
+})();
+</script>
+</body>
+</html>
