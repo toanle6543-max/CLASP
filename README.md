@@ -4,7 +4,8 @@ A browser-based Classical Laminate Theory (CLT) solver for composite laminates. 
 
 Try it live → <https://github.com/toanle6543-max/CLASP>
 
-Show Image <!-- replace with a screenshot of the main interface -->
+Show Image <<img width="1523" height="845" alt="image" src="https://github.com/user-attachments/assets/ae922a00-6a28-44fb-99bd-2d41fb2ddca1" />
+>
 
 Overview
 
@@ -12,7 +13,7 @@ C.L.A.S.P is a browser-based Classical Laminate Theory solver for composite lami
 
 It computes the ABD stiffness matrix, ply-by-ply stresses and strains, and first-ply failure loads (Max Stress, Max Strain, and Hashin–Rotem criteria), with support for arbitrary layups, multiple materials, and both Imperial and Metric units. An iterative process can also determine the loading under which a layup fails, with per-component load scaling and constant holds.
 
-The underlying math has been independently cross-checked against the original MATLAB implementation to 6 significant figures — see Validation below.
+The underlying math has been independently cross-checked against the original MATLAB implementation to 6 significant figures.
 
 Features
 
