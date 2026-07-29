@@ -14,7 +14,7 @@ C.L.A.S.P is a browser-based Classical Laminate Theory solver for composite lami
 
 It computes the ABD stiffness matrix, ply-by-ply stresses and strains, and first-ply failure loads (Max Stress, Max Strain, and Hashin–Rotem criteria), with support for arbitrary layups, multiple materials, and both Imperial and Metric units. An iterative process can also determine the loading under which a layup fails, with per-component load scaling and constant holds.
 
-The underlying math has been independently cross-checked against the original MATLAB implementation to 6 significant figures — see [Validation](#validation) below.
+The underlying math has been independently cross-checked against the original MATLAB implementation to 6 significant figures. See [Validation](#validation) below.
 
 ---
 
@@ -75,13 +75,13 @@ No install, no build step, no server:
 2. Open it in any modern browser
 3. Add a material → build a layup → enter loads → click **Run Analysis**
 
-To use it offline, just keep the `.html` file — everything runs client-side.
+To use it offline, download and run the `.html` file.
 
 ---
 
 ## Tech Stack
 
-- Plain HTML, CSS, and JavaScript — no frameworks, no build tools, no npm dependencies
+- Plain HTML, CSS, and JavaScript. No frameworks, no build tools, no npm dependencies
 - Single self-contained file by design, so it works fully offline and can be shared/run anywhere without setup
 - PDF export uses the browser's native print-to-PDF rather than a bundled PDF library, for the same reason
 
@@ -99,7 +99,7 @@ To use it offline, just keep the `.html` file — everything runs client-side.
 
 **Toan Le**
 Structural Engineering, UC San Diego
-[LinkedIn](#) · [Portfolio](#)
+[LinkedIn](https://www.linkedin.com/in/toan-minh-le/)
 
 ---
 
