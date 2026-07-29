@@ -2,7 +2,7 @@ C.L.A.S.P — Classical Lamination Analytical Solver Program
 
 A browser-based Classical Laminate Theory (CLT) solver for composite laminates. Single HTML file, zero dependencies, works fully offline.
 
-Try it live → <https://github.com/toanle6543-max/CLASP>
+Try it live → <https://toanle6543-max.github.io/CLASP/clasp.html>
 
 Show Image <<img width="1523" height="845" alt="image" src="https://github.com/user-attachments/assets/ae922a00-6a28-44fb-99bd-2d41fb2ddca1" />
 >
@@ -68,7 +68,7 @@ Download clasp.html (or open the live version)
 Open it in any modern browser
 Add a material → build a layup → enter loads → click Run Analysis
 
-To use offline, run the .html file in any browser.
+To use offline, download and run the .html file in any browser.
 
 Tech Stack
 Plain HTML, CSS, and JavaScript — no frameworks, no build tools, no npm dependencies
