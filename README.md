@@ -5,6 +5,9 @@ A browser-based Classical Laminate Theory (CLT) solver for composite laminates. 
 **[Try it live →](https://toanle6543-max.github.io/CLASP/clasp.html)**
 
 <img width="1523" height="845" alt="image" src="https://github.com/user-attachments/assets/ae922a00-6a28-44fb-99bd-2d41fb2ddca1" />
+<img width="1864" height="740" alt="image" src="https://github.com/user-attachments/assets/d9334c9a-31ab-4b4c-9deb-dfc74f485253" />
+<img width="1860" height="765" alt="image" src="https://github.com/user-attachments/assets/3c74dd5a-df22-4c41-96f9-9c2a16a86047" />
+
 
 ---
 
